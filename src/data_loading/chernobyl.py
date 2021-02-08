@@ -1,6 +1,9 @@
-import geopandas as gpd
+import os
 import pathlib
 import matplotlib.pyplot as plt
+import folium
+import geopandas as gpd
+# import src.constants as cst
 # from src.constants import GWS_DATA_DIR
 
 GWS_DATA_DIR = pathlib.Path("/gws/nopw/j04/ai4er/guided-team-challenge/2021/biodiversity")
@@ -8,26 +11,30 @@ GWS_DATA_DIR = pathlib.Path("/gws/nopw/j04/ai4er/guided-team-challenge/2021/biod
 
 def get_bio():
     # Getting biotope data
-    bio_path = GWS_DATA_DIR / "chernobyl_habitat_data" / "Biotope_EUNIS_ver1.shp"
+    bio_path = os.path.join(GWS_DATA_DIR, "chernobyl_habitat_data", "Biotope_EUNIS_ver1.shp")
     return gpd.read_file(bio_path)
 
 def get_veg():
     # getting vegetation data
-    veg_path = GWS_DATA_DIR / "chernobyl_habitat_data" / "Vegetation_mape.shp"
+    veg_path = os.path.join(GWS_DATA_DIR, "chernobyl_habitat_data", "Vegetation_mape.shp")
     return gpd.read_file(veg_path)
 
 
 def plot_together():
     bio_data = get_bio()
     veg_data = get_veg()
-    fig, (ax1,ax2) = plt.subplots(1,2, figsize=(10,4))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
     ax1.set_title("bio_data")
     bio_data.plot(ax=ax1)
     ax2.set_title("veg_data")
     veg_data.plot(ax=ax2)
+    plt.savefig(os.path.join("report", "figures", "veg_bio_cher.png"))
 
 
-import folium
+def get_geoj():
+    gj_path = os.path.join(GWS_DATA_DIR, "esa_cci_rois", "esa_cci_2005_chernobyl.geojson")
+    file = open(gj_path, 'rt')
+    return gpd.read_file(file, encoding='ascii')
 
 
 def get_merged():

@@ -1,6 +1,16 @@
 """
 Adding examples of raster to polygon functions (probably not working that well).
 """
+import os
+import src.constants as cst
+import rasterio
+import matplotlib.pyplot as plt
+from rasterio import features
+
+import numpy as np
+import geopandas as gpd
+import rasterio
+from rasterio.features import shapes
 
 
 def arcpy_nonsimplified(workspace, outPolygons, inRaster="zone", field="VALUE"):
@@ -37,7 +47,7 @@ def rasterio_poly(input_raster_file, band):
     return shapes
 
 
-def gdal_poly()
+def gdal_poly():
     """
     pip install GDAL
     sudo easy_install GDAL
@@ -47,3 +57,53 @@ def gdal_poly()
     from osgeo import gdal
     gdal.UseExceptions()
     band = dataset.GetRasterBand(1)
+
+
+def test_all():
+    print("testing")
+    img = rasterio.open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "in", "cea.tif"))
+    print(img)
+    print(dir(img))
+    print(img.meta)
+    array = img.read(1)
+    plt.imshow(array, cmap='pink')
+    plt.colorbar()
+    plt.savefig(os.path.join(os.path.dirname(os.path.realpath(__file__)), "out", "cea.png"))
+    plt.clf()
+    # https://gis.stackexchange.com/questions/187877/how-to-polygonize-raster-to-shapely-polygons
+    mask = array < 100
+    shapesA = rasterio.features.shapes(array, mask=mask, transform=img.transform)
+    print(shapesA.__sizeof__())
+    mask = array >= 100
+    shapesB = rasterio.features.shapes(array, mask=mask, transform=img.transform)
+    print(shapesB)
+    print(dir(shapesB))
+    print(shapesB.__sizeof__())
+
+    mask = None
+    with rasterio.Env():
+        with rasterio.open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "in", "cea.tif")) as img:
+            imag = img.read(1) # first band
+            image = (imag // 100).astype('int16')
+            plt.imshow(image)
+            plt.colorbar()
+            plt.savefig(os.path.join(os.path.dirname(os.path.realpath(__file__)), "out", "cea-blocked.png"))
+            plt.clf()
+            # print(image[0:100, 5:10])
+            results = (
+            {'properties': {'raster_val': v}, 'geometry': s}
+            for i, (s, v) 
+            in enumerate(
+                shapes(image, mask=mask, transform=img.transform)))
+    geoms = list(results)
+    gpd_polygonized_raster = gpd.GeoDataFrame.from_features(geoms)
+    gpd_polygonized_raster.to_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), "out", "cea.geojson"), driver='GeoJSON')
+    df_places = gpd.read_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), "out", "cea.geojson"))
+    fig, (ax1) = plt.subplots(1, 1, figsize=(10, 4))
+    ax1.set_title("polygonized data")
+    df_places.plot(ax=ax1)
+    plt.savefig(os.path.join(os.path.dirname(os.path.realpath(__file__)), "out", "cea-polygonized.png"))
+
+
+
+
