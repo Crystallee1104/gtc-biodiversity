@@ -2,14 +2,12 @@
 Adding examples of raster to polygon functions (probably not working that well).
 """
 import os
+import numpy as np
 import src.constants as cst
 import rasterio
 import matplotlib.pyplot as plt
 from rasterio import features
-
-import numpy as np
 import geopandas as gpd
-import rasterio
 from rasterio.features import shapes
 
 
@@ -71,21 +69,13 @@ def test_all():
     plt.savefig(os.path.join(os.path.dirname(os.path.realpath(__file__)), "out", "cea.png"))
     plt.clf()
     # https://gis.stackexchange.com/questions/187877/how-to-polygonize-raster-to-shapely-polygons
-    mask = array < 100
-    shapesA = rasterio.features.shapes(array, mask=mask, transform=img.transform)
-    print(shapesA.__sizeof__())
-    mask = array >= 100
-    shapesB = rasterio.features.shapes(array, mask=mask, transform=img.transform)
-    print(shapesB)
-    print(dir(shapesB))
-    print(shapesB.__sizeof__())
 
     mask = None
     with rasterio.Env():
         with rasterio.open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "in", "cea.tif")) as img:
             imag = img.read(1) # first band
             image = (imag // 100).astype('int16')
-            plt.imshow(image)
+            plt.imshow(image, cmap='pink')
             plt.colorbar()
             plt.savefig(os.path.join(os.path.dirname(os.path.realpath(__file__)), "out", "cea-blocked.png"))
             plt.clf()
@@ -98,12 +88,18 @@ def test_all():
     geoms = list(results)
     gpd_polygonized_raster = gpd.GeoDataFrame.from_features(geoms)
     gpd_polygonized_raster.to_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), "out", "cea.geojson"), driver='GeoJSON')
+    
+    # open from geojson, plot, and print.
     df_places = gpd.read_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), "out", "cea.geojson"))
     fig, (ax1) = plt.subplots(1, 1, figsize=(10, 4))
     ax1.set_title("polygonized data")
-    df_places.plot(ax=ax1)
+    df_places.plot(ax=ax1, alpha=0.5, cmap='pink')
+    #plt.colorbar()
     plt.savefig(os.path.join(os.path.dirname(os.path.realpath(__file__)), "out", "cea-polygonized.png"))
-
-
-
+    print(df_places)
+    print(df_places.loc[0])
+    print(df_places.loc[1])
+    print(dir(df_places.loc[0]))
+    print(df_places.loc[0].geometry)
+    print(df_places.loc[1].geometry)
 
