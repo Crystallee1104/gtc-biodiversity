@@ -9,6 +9,9 @@ import matplotlib.pyplot as plt
 from rasterio import features
 import geopandas as gpd
 from rasterio.features import shapes
+from rasterio import plot as rplot
+from rasterio.plot import show as rshow
+from rasterio.mask import mask as rmask
 
 
 def arcpy_nonsimplified(workspace, outPolygons, inRaster="zone", field="VALUE"):
@@ -29,35 +32,7 @@ def arcpy_nonsimplified(workspace, outPolygons, inRaster="zone", field="VALUE"):
     arcpy.RasterToPolygon_conversion(inRaster, outPolygons, "NO_SIMPLIFY", field)
 
 
-def rasterio_poly(input_raster_file, band):
-    """
-    https://rasterio.readthedocs.io/en/latest/topics/features.html
-    :param intput_raster_file: e.g. geotiff.
-    :param band: int
-    :return: polygon
-    """
-    import rasterio
-    from rasterio import features
-    with rasterio.open(input_raster_file) as img:
-        blue = img.read(band)
-        mask = blue != 255
-        shapes = features.shapes(blue, mask=mask, transform=img.transform)
-    return shapes
-
-
-def gdal_poly():
-    """
-    pip install GDAL
-    sudo easy_install GDAL
-    https://gdal.org/download.html
-    https://trac.osgeo.org/osgeo4w/
-    """
-    from osgeo import gdal
-    gdal.UseExceptions()
-    band = dataset.GetRasterBand(1)
-
-
-def test_all():
+def test_rast():
     print("testing")
     img = rasterio.open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "in", "cea.tif"))
     print(img)
@@ -103,3 +78,39 @@ def test_all():
     print(df_places.loc[0].geometry)
     print(df_places.loc[1].geometry)
 
+
+def raster_to_poly(input_tiff_path, output_geojson_path):
+    """
+    Using rasterio to go from raster to polygon
+    but needs a tiff with an input.
+    usage: 
+
+    """
+    mask = None
+    with rasterio.Env():
+        with rasterio.open(input_tiff_path) as image:
+            image_band_1 = image.read(1) # first band
+            results = (
+            {'properties': {'raster_val': v}, 'geometry': s}
+            for i, (s, v) 
+            in enumerate(
+                shapes(image_band_1, mask=mask, transform=image.transform)))
+    geoms = list(results)
+    gpd_polygonized_raster = gpd.GeoDataFrame.from_features(geoms)
+    print(gpd_polygonized_raster)
+    gpd_polygonized_raster.to_file(output_geojson_path, driver='GeoJSON')
+
+
+def trial_esa_cci():
+    for year in range(1992, 2016):
+        path = "/gws/nopw/j04/ai4er/guided-team-challenge/2021/biodiversity/esa_cci_rois/esa_cci_" + str(year) + "_chernobyl.tif"
+        image = rasterio.open(path)
+        print(image)
+        rshow(image.read(), transform=image.transform, cmap='pink')
+        # plt.colorbar()
+        plt.savefig(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                    "out", "esa_cci_" + str(year) + "_chernobyl.png"))
+        # takes roughly 1 minute to run:
+        raster_to_poly(path, os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                       "out", "esa_cci_" + str(year) + "_chernobyl.geojson"))
+    
