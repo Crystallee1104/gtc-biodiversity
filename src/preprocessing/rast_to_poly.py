@@ -113,4 +113,48 @@ def trial_esa_cci():
         # takes roughly 1 minute to run:
         raster_to_poly(path, os.path.join(os.path.dirname(os.path.realpath(__file__)),
                        "out", "esa_cci_" + str(year) + "_chernobyl.geojson"))
-    
+
+
+def esa_cci_to_geojson(output_dir=os.path.join(os.path.dirname(os.path.realpath(__file__)), "out")):
+    for year in range(1992, 2016):
+        path = "/gws/nopw/j04/ai4er/guided-team-challenge/2021/biodiversity/esa_cci_rois/esa_cci_" + str(year) + "_chernobyl.tif"
+        raster_to_poly(path, os.path.join(output_dir, "esa_cci_" + str(year) + "_chernobyl.geojson"))
+
+
+def comp_goejsons():
+    if True:
+        year = 1995
+        old_path = "/gws/nopw/j04/ai4er/guided-team-challenge/2021/biodiversity/esa_cci_rois/esa_cci_" + str(year) + "_chernobyl.geojson"
+        df_places_old = gpd.read_file(old_path, encoding="utf-8")
+        new_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "out", "esa_cci_" + str(year) + "_chernobyl.geojson")
+        df_places_new = gpd.read_file(new_path, encoding="utf-8")
+        print(df_places_new)
+        print(df_places_old)
+
+
+"""
+(/home/users/sithom/gtc-biodiversity/env) [sithom@sci2 gtc-biodiversity]$ python3 main.py 
+Traceback (most recent call last):
+  File "fiona/_shim.pyx", line 83, in fiona._shim.gdal_open_vector
+  File "fiona/_err.pyx", line 291, in fiona._err.exc_wrap_pointer
+fiona._err.CPLE_OpenFailedError: '/gws/nopw/j04/ai4er/guided-team-challenge/2021/biodiversity/esa_cci_rois/esa_cci_1995_chernobyl.geojson' not recognized as a supported file format.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "main.py", line 12, in <module>
+    rtp.comp_goejsons()
+  File "/home/users/sithom/gtc-biodiversity/src/preprocessing/rast_to_poly.py", line 121, in comp_goejsons
+    df_places_old = gpd.read_file(old_path, encoding="utf-8")
+  File "/home/users/sithom/gtc-biodiversity/env/lib/python3.8/site-packages/geopandas/io/file.py", line 96, in _read_file
+    with reader(path_or_bytes, **kwargs) as features:
+  File "/home/users/sithom/gtc-biodiversity/env/lib/python3.8/site-packages/fiona/env.py", line 400, in wrapper
+    return f(*args, **kwargs)
+  File "/home/users/sithom/gtc-biodiversity/env/lib/python3.8/site-packages/fiona/__init__.py", line 256, in open
+    c = Collection(path, mode, driver=driver, encoding=encoding,
+  File "/home/users/sithom/gtc-biodiversity/env/lib/python3.8/site-packages/fiona/collection.py", line 162, in __init__
+    self.session.start(self, **kwargs)
+  File "fiona/ogrext.pyx", line 540, in fiona.ogrext.Session.start
+  File "fiona/_shim.pyx", line 90, in fiona._shim.gdal_open_vector
+fiona.errors.DriverError: '/gws/nopw/j04/ai4er/guided-team-challenge/2021/biodiversity/esa_cci_rois/esa_cci_1995_chernobyl.geojson' not recognized as a supported file format.
+"""
